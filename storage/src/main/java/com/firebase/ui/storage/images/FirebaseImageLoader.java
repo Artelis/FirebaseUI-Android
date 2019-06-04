@@ -57,8 +57,9 @@ public class FirebaseImageLoader implements ModelLoader<StorageReference, InputS
      */
     public static class Factory implements ModelLoaderFactory<StorageReference, InputStream> {
 
+        @NonNull
         @Override
-        public ModelLoader<StorageReference, InputStream> build(MultiModelLoaderFactory factory) {
+        public ModelLoader<StorageReference, InputStream> build(@NonNull MultiModelLoaderFactory factory) {
             return new FirebaseImageLoader();
         }
 
@@ -70,17 +71,17 @@ public class FirebaseImageLoader implements ModelLoader<StorageReference, InputS
 
     @Nullable
     @Override
-    public LoadData<InputStream> buildLoadData(StorageReference reference,
+    public LoadData<InputStream> buildLoadData(@NonNull StorageReference reference,
                                                int height,
                                                int width,
-                                               Options options) {
+                                               @NonNull Options options) {
         return new LoadData<>(
                 new FirebaseStorageKey(reference),
                 new FirebaseStorageFetcher(reference));
     }
 
     @Override
-    public boolean handles(StorageReference reference) {
+    public boolean handles(@NonNull StorageReference reference) {
         return true;
     }
 
@@ -93,8 +94,23 @@ public class FirebaseImageLoader implements ModelLoader<StorageReference, InputS
         }
 
         @Override
-        public void updateDiskCacheKey(MessageDigest digest) {
+        public void updateDiskCacheKey(@NonNull MessageDigest digest) {
             digest.update(mRef.getPath().getBytes(Charset.defaultCharset()));
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            FirebaseStorageKey key = (FirebaseStorageKey) o;
+
+            return mRef.equals(key.mRef);
+        }
+
+        @Override
+        public int hashCode() {
+            return mRef.hashCode();
         }
     }
 
@@ -109,8 +125,8 @@ public class FirebaseImageLoader implements ModelLoader<StorageReference, InputS
         }
 
         @Override
-        public void loadData(Priority priority,
-                             final DataCallback<? super InputStream> callback) {
+        public void loadData(@NonNull Priority priority,
+                             @NonNull final DataCallback<? super InputStream> callback) {
             mStreamTask = mRef.getStream();
             mStreamTask
                     .addOnSuccessListener(new OnSuccessListener<StreamDownloadTask.TaskSnapshot>() {

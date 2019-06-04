@@ -18,6 +18,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.DrawableRes;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.support.annotation.StyleRes;
 import android.support.design.widget.Snackbar;
@@ -25,23 +27,28 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.AppCompatDelegate;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
+import com.firebase.ui.auth.AuthMethodPickerLayout;
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.AuthUI.IdpConfig;
 import com.firebase.ui.auth.ErrorCodes;
 import com.firebase.ui.auth.IdpResponse;
+import com.firebase.ui.auth.util.ExtraConstants;
 import com.firebase.uidemo.R;
+import com.firebase.uidemo.util.ConfigurationUtils;
 import com.google.android.gms.common.Scopes;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.ActionCodeSettings;
+import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import butterknife.BindView;
@@ -53,106 +60,68 @@ public class AuthUiActivity extends AppCompatActivity {
 
     private static final String GOOGLE_TOS_URL = "https://www.google.com/policies/terms/";
     private static final String FIREBASE_TOS_URL = "https://firebase.google.com/terms/";
-    private static final String GOOGLE_PRIVACY_POLICY_URL = "https://www.google.com/policies/privacy/";
-    private static final String FIREBASE_PRIVACY_POLICY_URL = "https://firebase.google.com/terms/analytics/#7_privacy";
+    private static final String GOOGLE_PRIVACY_POLICY_URL = "https://www.google" +
+            ".com/policies/privacy/";
+    private static final String FIREBASE_PRIVACY_POLICY_URL = "https://firebase.google" +
+            ".com/terms/analytics/#7_privacy";
 
     private static final int RC_SIGN_IN = 100;
 
-    @BindView(R.id.default_theme)
-    RadioButton mUseDefaultTheme;
+    @BindView(R.id.root) View mRootView;
 
-    @BindView(R.id.green_theme)
-    RadioButton mUseGreenTheme;
+    @BindView(R.id.google_provider) CheckBox mUseGoogleProvider;
+    @BindView(R.id.facebook_provider) CheckBox mUseFacebookProvider;
+    @BindView(R.id.twitter_provider) CheckBox mUseTwitterProvider;
+    @BindView(R.id.github_provider) CheckBox mUseGitHubProvider;
+    @BindView(R.id.email_provider) CheckBox mUseEmailProvider;
+    @BindView(R.id.email_link_provider) CheckBox mUseEmailLinkProvider;
+    @BindView(R.id.phone_provider) CheckBox mUsePhoneProvider;
+    @BindView(R.id.anonymous_provider) CheckBox mUseAnonymousProvider;
 
-    @BindView(R.id.purple_theme)
-    RadioButton mUsePurpleTheme;
+    @BindView(R.id.default_layout) RadioButton mDefaultLayout;
+    @BindView(R.id.custom_layout) RadioButton mCustomLayout;
 
-    @BindView(R.id.dark_theme)
-    RadioButton mUseDarkTheme;
+    @BindView(R.id.default_theme) RadioButton mDefaultTheme;
+    @BindView(R.id.green_theme) RadioButton mGreenTheme;
+    @BindView(R.id.purple_theme) RadioButton mPurpleTheme;
+    @BindView(R.id.dark_theme) RadioButton mDarkTheme;
 
-    @BindView(R.id.email_provider)
-    CheckBox mUseEmailProvider;
+    @BindView(R.id.firebase_logo) RadioButton mFirebaseLogo;
+    @BindView(R.id.google_logo) RadioButton mGoogleLogo;
+    @BindView(R.id.no_logo) RadioButton mNoLogo;
 
-    @BindView(R.id.phone_provider)
-    CheckBox mUsePhoneProvider;
+    @BindView(R.id.google_tos_privacy) RadioButton mUseGoogleTosPp;
+    @BindView(R.id.firebase_tos_privacy) RadioButton mUseFirebaseTosPp;
 
-    @BindView(R.id.google_provider)
-    CheckBox mUseGoogleProvider;
+    @BindView(R.id.google_scopes_header) TextView mGoogleScopesHeader;
+    @BindView(R.id.google_scope_drive_file) CheckBox mGoogleScopeDriveFile;
+    @BindView(R.id.google_scope_youtube_data) CheckBox mGoogleScopeYoutubeData;
 
-    @BindView(R.id.facebook_provider)
-    CheckBox mUseFacebookProvider;
+    @BindView(R.id.facebook_permissions_header) TextView mFacebookPermissionsHeader;
+    @BindView(R.id.facebook_permission_friends) CheckBox mFacebookPermissionFriends;
+    @BindView(R.id.facebook_permission_photos) CheckBox mFacebookPermissionPhotos;
 
-    @BindView(R.id.twitter_provider)
-    CheckBox mUseTwitterProvider;
+    @BindView(R.id.github_permissions_header) TextView mGitHubPermissionsHeader;
+    @BindView(R.id.github_permission_repo) CheckBox mGitHubPermissionRepo;
+    @BindView(R.id.github_permission_gist) CheckBox mGitHubPermissionGist;
 
-    @BindView(R.id.google_tos)
-    RadioButton mUseGoogleTos;
+    @BindView(R.id.credential_selector_enabled) CheckBox mEnableCredentialSelector;
+    @BindView(R.id.hint_selector_enabled) CheckBox mEnableHintSelector;
+    @BindView(R.id.allow_new_email_accounts) CheckBox mAllowNewEmailAccounts;
+    @BindView(R.id.require_name) CheckBox mRequireName;
 
-    @BindView(R.id.firebase_tos)
-    RadioButton mUseFirebaseTos;
-
-    @BindView(R.id.google_privacy)
-    RadioButton mUseGooglePrivacyPolicy;
-
-    @BindView(R.id.firebase_privacy)
-    RadioButton mUseFirebasePrivacyPolicy;
-
-    @BindView(R.id.sign_in)
-    Button mSignIn;
-
-    @BindView(R.id.root)
-    View mRootView;
-
-    @BindView(R.id.firebase_logo)
-    RadioButton mFirebaseLogo;
-
-    @BindView(R.id.google_logo)
-    RadioButton mGoogleLogo;
-
-    @BindView(R.id.no_logo)
-    RadioButton mNoLogo;
-
-    @BindView(R.id.credential_selector_enabled)
-    CheckBox mEnableCredentialSelector;
-
-    @BindView(R.id.hint_selector_enabled)
-    CheckBox mEnableHintSelector;
-
-    @BindView(R.id.allow_new_email_accounts)
-    CheckBox mAllowNewEmailAccounts;
-
-    @BindView(R.id.require_name)
-    CheckBox mRequireName;
-
-    @BindView(R.id.facebook_scopes_label)
-    TextView mFacebookScopesLabel;
-
-    @BindView(R.id.facebook_scope_friends)
-    CheckBox mFacebookScopeFriends;
-
-    @BindView(R.id.facebook_scope_photos)
-    CheckBox mFacebookScopePhotos;
-
-    @BindView(R.id.google_scopes_label)
-    TextView mGoogleScopesLabel;
-
-    @BindView(R.id.google_scope_drive_file)
-    CheckBox mGoogleScopeDriveFile;
-
-    @BindView(R.id.google_scope_youtube_data)
-    CheckBox mGoogleScopeYoutubeData;
-
-    public static Intent createIntent(Context context) {
+    @NonNull
+    public static Intent createIntent(@NonNull Context context) {
         return new Intent(context, AuthUiActivity.class);
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.auth_ui_layout);
         ButterKnife.bind(this);
 
-        if (isGoogleMisconfigured()) {
+        if (ConfigurationUtils.isGoogleMisconfigured(this)) {
             mUseGoogleProvider.setChecked(false);
             mUseGoogleProvider.setEnabled(false);
             mUseGoogleProvider.setText(R.string.google_label_missing_config);
@@ -167,73 +136,196 @@ public class AuthUiActivity extends AppCompatActivity {
             });
         }
 
-        if (isFacebookMisconfigured()) {
+        if (ConfigurationUtils.isFacebookMisconfigured(this)) {
             mUseFacebookProvider.setChecked(false);
             mUseFacebookProvider.setEnabled(false);
             mUseFacebookProvider.setText(R.string.facebook_label_missing_config);
-            setFacebookScopesEnabled(false);
+            setFacebookPermissionsEnabled(false);
         } else {
-            setFacebookScopesEnabled(mUseFacebookProvider.isChecked());
+            setFacebookPermissionsEnabled(mUseFacebookProvider.isChecked());
             mUseFacebookProvider.setOnCheckedChangeListener(new OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
-                    setFacebookScopesEnabled(checked);
+                    setFacebookPermissionsEnabled(checked);
                 }
             });
         }
 
-        if (isTwitterMisconfigured()) {
+        if (ConfigurationUtils.isTwitterMisconfigured(this)) {
             mUseTwitterProvider.setChecked(false);
             mUseTwitterProvider.setEnabled(false);
             mUseTwitterProvider.setText(R.string.twitter_label_missing_config);
         }
 
-        if (isGoogleMisconfigured() || isFacebookMisconfigured() || isTwitterMisconfigured()) {
+        if (ConfigurationUtils.isGitHubMisconfigured(this)) {
+            mUseGitHubProvider.setChecked(false);
+            mUseGitHubProvider.setEnabled(false);
+            mUseGitHubProvider.setText(R.string.github_label_missing_config);
+            setGitHubPermissionsEnabled(false);
+        } else {
+            setGitHubPermissionsEnabled(mUseGitHubProvider.isChecked());
+            mUseGitHubProvider.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                    setGitHubPermissionsEnabled(checked);
+                }
+            });
+        }
+
+        mUseEmailLinkProvider.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                flipPasswordProviderCheckbox(isChecked);
+            }
+        });
+
+        mUseEmailProvider.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                flipEmailLinkProviderCheckbox(isChecked);
+            }
+        });
+
+        mUseEmailLinkProvider.setChecked(false);
+        mUseEmailProvider.setChecked(true);
+
+        // The custom layout in this app only supports Email and Google providers.
+        mCustomLayout.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                if (checked) {
+                    mUseGoogleProvider.setChecked(true);
+                    mUseEmailProvider.setChecked(true);
+
+                    mUseFacebookProvider.setChecked(false);
+                    mUseTwitterProvider.setChecked(false);
+                    mUseGitHubProvider.setChecked(false);
+                    mUseEmailLinkProvider.setChecked(false);
+                    mUsePhoneProvider.setChecked(false);
+                    mUseAnonymousProvider.setChecked(false);
+                }
+            }
+        });
+
+        if (ConfigurationUtils.isGoogleMisconfigured(this)
+                || ConfigurationUtils.isFacebookMisconfigured(this)
+                || ConfigurationUtils.isTwitterMisconfigured(this)
+                || ConfigurationUtils.isGitHubMisconfigured(this)) {
             showSnackbar(R.string.configuration_required);
         }
 
         if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
-            mUseDarkTheme.setChecked(true);
+            mDarkTheme.setChecked(true);
+        }
+
+        catchEmailLinkSignIn();
+    }
+
+    public void catchEmailLinkSignIn() {
+        if (getIntent().getExtras() == null) {
+            return;
+        }
+        String link = getIntent().getExtras().getString(ExtraConstants.EMAIL_LINK_SIGN_IN);
+        if (link != null) {
+            signInWithEmailLink(link);
+        }
+    }
+
+    public void flipPasswordProviderCheckbox(boolean emailLinkProviderIsChecked) {
+        if (emailLinkProviderIsChecked) {
+            mUseEmailProvider.setChecked(false);
+        }
+    }
+
+    public void flipEmailLinkProviderCheckbox(boolean passwordProviderIsChecked) {
+        if (passwordProviderIsChecked) {
+            mUseEmailLinkProvider.setChecked(false);
         }
     }
 
     @OnClick(R.id.sign_in)
-    public void signIn(View view) {
-        startActivityForResult(
-                AuthUI.getInstance().createSignInIntentBuilder()
-                        .setTheme(getSelectedTheme())
-                        .setLogo(getSelectedLogo())
-                        .setAvailableProviders(getSelectedProviders())
-                        .setTosUrl(getSelectedTosUrl())
-                        .setPrivacyPolicyUrl(getSelectedPrivacyPolicyUrl())
-                        .setIsSmartLockEnabled(mEnableCredentialSelector.isChecked(),
-                                mEnableHintSelector.isChecked())
-                        .build(),
-                RC_SIGN_IN);
+    public void signIn() {
+        startActivityForResult(buildSignInIntent(/*link=*/null), RC_SIGN_IN);
+    }
+
+    public void signInWithEmailLink(@Nullable String link) {
+        startActivityForResult(buildSignInIntent(link), RC_SIGN_IN);
+    }
+
+    @NonNull
+    public Intent buildSignInIntent(@Nullable String link) {
+        AuthUI.SignInIntentBuilder builder = AuthUI.getInstance().createSignInIntentBuilder()
+                .setTheme(getSelectedTheme())
+                .setLogo(getSelectedLogo())
+                .setAvailableProviders(getSelectedProviders())
+                .setIsSmartLockEnabled(mEnableCredentialSelector.isChecked(),
+                        mEnableHintSelector.isChecked());
+
+        if (mCustomLayout.isChecked()) {
+            AuthMethodPickerLayout customLayout = new AuthMethodPickerLayout
+                    .Builder(R.layout.auth_method_picker_custom_layout)
+                    .setGoogleButtonId(R.id.custom_google_signin_button)
+                    .setEmailButtonId(R.id.custom_email_signin_clickable_text)
+                    .setTosAndPrivacyPolicyId(R.id.custom_tos_pp)
+                    .build();
+
+            builder.setTheme(R.style.CustomTheme);
+            builder.setAuthMethodPickerLayout(customLayout);
+        }
+
+        if (getSelectedTosUrl() != null && getSelectedPrivacyPolicyUrl() != null) {
+            builder.setTosAndPrivacyPolicyUrls(
+                    getSelectedTosUrl(),
+                    getSelectedPrivacyPolicyUrl());
+        }
+
+        if (link != null) {
+            builder.setEmailLink(link);
+        }
+
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+
+        if (auth.getCurrentUser() != null && auth.getCurrentUser().isAnonymous()) {
+            builder.enableAnonymousUsersAutoUpgrade();
+        }
+
+        return builder.build();
+    }
+
+    @OnClick(R.id.sign_in_silent)
+    public void silentSignIn() {
+        AuthUI.getInstance().silentSignIn(this, getSelectedProviders())
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            startSignedInActivity(null);
+                        } else {
+                            showSnackbar(R.string.sign_in_failed);
+                        }
+                    }
+                });
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == RC_SIGN_IN) {
             handleSignInResponse(resultCode, data);
-            return;
         }
-
-        showSnackbar(R.string.unknown_response);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         FirebaseAuth auth = FirebaseAuth.getInstance();
-        if (auth.getCurrentUser() != null) {
+        if (auth.getCurrentUser() != null && getIntent().getExtras() == null) {
             startSignedInActivity(null);
             finish();
         }
     }
 
-    private void handleSignInResponse(int resultCode, Intent data) {
+    private void handleSignInResponse(int resultCode, @Nullable Intent data) {
         IdpResponse response = IdpResponse.fromResultIntent(data);
 
         // Successfully signed in
@@ -253,40 +345,29 @@ public class AuthUiActivity extends AppCompatActivity {
                 return;
             }
 
+            if (response.getError().getErrorCode() == ErrorCodes.ANONYMOUS_UPGRADE_MERGE_CONFLICT) {
+                Intent intent = new Intent(this, AnonymousUpgradeActivity.class).putExtra
+                        (ExtraConstants.IDP_RESPONSE, response);
+                startActivity(intent);
+            }
+
+            if (response.getError().getErrorCode() == ErrorCodes.ERROR_USER_DISABLED) {
+                showSnackbar(R.string.account_disabled);
+                return;
+            }
+
             showSnackbar(R.string.unknown_error);
             Log.e(TAG, "Sign-in error: ", response.getError());
         }
     }
 
-    private void startSignedInActivity(IdpResponse response) {
-        startActivity(
-                SignedInActivity.createIntent(
-                        this,
-                        response,
-                        new SignedInActivity.SignedInConfig(
-                                getSelectedLogo(),
-                                getSelectedTheme(),
-                                getSelectedProviders(),
-                                getSelectedTosUrl(),
-                                mEnableCredentialSelector.isChecked(),
-                                mEnableHintSelector.isChecked())));
-    }
-
-    private void setGoogleScopesEnabled(boolean enabled) {
-        mGoogleScopesLabel.setEnabled(enabled);
-        mGoogleScopeDriveFile.setEnabled(enabled);
-        mGoogleScopeYoutubeData.setEnabled(enabled);
-    }
-
-    private void setFacebookScopesEnabled(boolean enabled) {
-        mFacebookScopesLabel.setEnabled(enabled);
-        mFacebookScopeFriends.setEnabled(enabled);
-        mFacebookScopePhotos.setEnabled(enabled);
+    private void startSignedInActivity(@Nullable IdpResponse response) {
+        startActivity(SignedInActivity.createIntent(this, response));
     }
 
     @OnClick({R.id.default_theme, R.id.purple_theme, R.id.green_theme, R.id.dark_theme})
     public void toggleDarkTheme() {
-        int mode = mUseDarkTheme.isChecked() ?
+        int mode = mDarkTheme.isChecked() ?
                 AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_AUTO;
         AppCompatDelegate.setDefaultNightMode(mode);
         getDelegate().setLocalNightMode(mode);
@@ -294,11 +375,11 @@ public class AuthUiActivity extends AppCompatActivity {
 
     @StyleRes
     private int getSelectedTheme() {
-        if (mUseGreenTheme.isChecked()) {
+        if (mGreenTheme.isChecked()) {
             return R.style.GreenTheme;
         }
 
-        if (mUsePurpleTheme.isChecked()) {
+        if (mPurpleTheme.isChecked()) {
             return R.style.PurpleTheme;
         }
 
@@ -333,6 +414,12 @@ public class AuthUiActivity extends AppCompatActivity {
             selectedProviders.add(new IdpConfig.TwitterBuilder().build());
         }
 
+        if (mUseGitHubProvider.isChecked()) {
+            selectedProviders.add(new IdpConfig.GitHubBuilder()
+                    .setPermissions(getGitHubPermissions())
+                    .build());
+        }
+
         if (mUseEmailProvider.isChecked()) {
             selectedProviders.add(new IdpConfig.EmailBuilder()
                     .setRequireName(mRequireName.isChecked())
@@ -340,59 +427,73 @@ public class AuthUiActivity extends AppCompatActivity {
                     .build());
         }
 
+        if (mUseEmailLinkProvider.isChecked()) {
+            ActionCodeSettings actionCodeSettings = ActionCodeSettings.newBuilder()
+                    .setAndroidPackageName("com.firebase.uidemo", true, null)
+                    .setHandleCodeInApp(true)
+                    .setUrl("https://google.com")
+                    .build();
+
+            selectedProviders.add(new IdpConfig.EmailBuilder()
+                    .setAllowNewAccounts(mAllowNewEmailAccounts.isChecked())
+                    .setActionCodeSettings(actionCodeSettings)
+                    .enableEmailLinkSignIn()
+                    .build());
+        }
+
         if (mUsePhoneProvider.isChecked()) {
             selectedProviders.add(new IdpConfig.PhoneBuilder().build());
+        }
+
+        if (mUseAnonymousProvider.isChecked()) {
+            selectedProviders.add(new IdpConfig.AnonymousBuilder().build());
         }
 
         return selectedProviders;
     }
 
+    @Nullable
     private String getSelectedTosUrl() {
-        if (mUseGoogleTos.isChecked()) {
+        if (mUseGoogleTosPp.isChecked()) {
             return GOOGLE_TOS_URL;
         }
 
-        return FIREBASE_TOS_URL;
+        if (mUseFirebaseTosPp.isChecked()) {
+            return FIREBASE_TOS_URL;
+        }
+
+        return null;
     }
 
+    @Nullable
     private String getSelectedPrivacyPolicyUrl() {
-        if (mUseGooglePrivacyPolicy.isChecked()) {
+        if (mUseGoogleTosPp.isChecked()) {
             return GOOGLE_PRIVACY_POLICY_URL;
         }
 
-        return FIREBASE_PRIVACY_POLICY_URL;
-    }
-
-    private boolean isGoogleMisconfigured() {
-        return AuthUI.UNCONFIGURED_CONFIG_VALUE.equals(getString(R.string.default_web_client_id));
-    }
-
-    private boolean isFacebookMisconfigured() {
-        return AuthUI.UNCONFIGURED_CONFIG_VALUE.equals(getString(R.string.facebook_application_id));
-    }
-
-    private boolean isTwitterMisconfigured() {
-        List<String> twitterConfigs = Arrays.asList(
-                getString(R.string.twitter_consumer_key),
-                getString(R.string.twitter_consumer_secret)
-        );
-
-        return twitterConfigs.contains(AuthUI.UNCONFIGURED_CONFIG_VALUE);
-    }
-
-    private void showSnackbar(@StringRes int errorMessageRes) {
-        Snackbar.make(mRootView, errorMessageRes, Snackbar.LENGTH_LONG).show();
-    }
-
-    private List<String> getFacebookPermissions() {
-        List<String> result = new ArrayList<>();
-        if (mFacebookScopeFriends.isChecked()) {
-            result.add("user_friends");
+        if (mUseFirebaseTosPp.isChecked()) {
+            return FIREBASE_PRIVACY_POLICY_URL;
         }
-        if (mFacebookScopePhotos.isChecked()) {
-            result.add("user_photos");
-        }
-        return result;
+
+        return null;
+    }
+
+    private void setGoogleScopesEnabled(boolean enabled) {
+        mGoogleScopesHeader.setEnabled(enabled);
+        mGoogleScopeDriveFile.setEnabled(enabled);
+        mGoogleScopeYoutubeData.setEnabled(enabled);
+    }
+
+    private void setFacebookPermissionsEnabled(boolean enabled) {
+        mFacebookPermissionsHeader.setEnabled(enabled);
+        mFacebookPermissionFriends.setEnabled(enabled);
+        mFacebookPermissionPhotos.setEnabled(enabled);
+    }
+
+    private void setGitHubPermissionsEnabled(boolean enabled) {
+        mGitHubPermissionsHeader.setEnabled(enabled);
+        mGitHubPermissionRepo.setEnabled(enabled);
+        mGitHubPermissionGist.setEnabled(enabled);
     }
 
     private List<String> getGoogleScopes() {
@@ -404,5 +505,31 @@ public class AuthUiActivity extends AppCompatActivity {
             result.add(Scopes.DRIVE_FILE);
         }
         return result;
+    }
+
+    private List<String> getFacebookPermissions() {
+        List<String> result = new ArrayList<>();
+        if (mFacebookPermissionFriends.isChecked()) {
+            result.add("user_friends");
+        }
+        if (mFacebookPermissionPhotos.isChecked()) {
+            result.add("user_photos");
+        }
+        return result;
+    }
+
+    private List<String> getGitHubPermissions() {
+        List<String> result = new ArrayList<>();
+        if (mGitHubPermissionRepo.isChecked()) {
+            result.add("repo");
+        }
+        if (mGitHubPermissionGist.isChecked()) {
+            result.add("gist");
+        }
+        return result;
+    }
+
+    private void showSnackbar(@StringRes int errorMessageRes) {
+        Snackbar.make(mRootView, errorMessageRes, Snackbar.LENGTH_LONG).show();
     }
 }

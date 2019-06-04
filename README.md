@@ -1,5 +1,8 @@
 # FirebaseUI for Android — UI Bindings for Firebase
 
+[![FirebaseOpensource.com](https://img.shields.io/badge/Docs-firebaseopensource.com-orange.svg)](
+https://firebaseopensource.com/projects/firebase/firebaseui-android
+)
 [![Build Status](https://travis-ci.org/firebase/FirebaseUI-Android.svg?branch=master)](https://travis-ci.org/firebase/FirebaseUI-Android)
 
 FirebaseUI is an open-source library for Android that allows you to
@@ -13,14 +16,12 @@ A compatible FirebaseUI client is also available for [iOS](https://github.com/fi
 1. [Installation](#installation)
    1. [Upgrading](#upgrading)
 1. [Dependencies](#dependencies)
-   1. [Compatability](#compatibility-with-firebase--google-play-services-libraries)
+   1. [Compatibility](#compatibility-with-firebase--google-play-services-libraries)
    1. [Upgrading dependencies](#upgrading-dependencies)
 1. [Sample App](#sample-app)
 1. [Snapshot Builds](#snapshot-builds)
 1. [Contributing](#contributing)
    1. [Installing](#installing-locally)
-   1. [Deploying](#deployment)
-   1. [Tagging](#tag-a-release-on-github)
    1. [License agreements](#contributor-license-agreements)
    1. [Process](#contribution-process)
 
@@ -46,17 +47,20 @@ libraries.
 
 ```groovy
 dependencies {
-// FirebaseUI for Firebase Realtime Database
-implementation 'com.firebaseui:firebase-ui-database:3.2.2'
+    // FirebaseUI for Firebase Realtime Database
+    implementation 'com.firebaseui:firebase-ui-database:5.0.0'
 
-// FirebaseUI for Cloud Firestore
-implementation 'com.firebaseui:firebase-ui-firestore:3.2.2'
+    // FirebaseUI for Cloud Firestore
+    implementation 'com.firebaseui:firebase-ui-firestore:5.0.0'
 
-// FirebaseUI for Firebase Auth
-implementation 'com.firebaseui:firebase-ui-auth:3.2.2'
+    // FirebaseUI for Firebase Auth
+    implementation 'com.firebaseui:firebase-ui-auth:5.0.0'
 
-// FirebaseUI for Cloud Storage
-implementation 'com.firebaseui:firebase-ui-storage:3.2.2'
+    // FirebaseUI for Firebase Auth (GitHub provider)
+    implementation 'com.firebaseui:firebase-ui-auth-github:5.0.0'
+
+    // FirebaseUI for Cloud Storage
+    implementation 'com.firebaseui:firebase-ui-storage:5.0.0'
 }
 ```
 
@@ -70,6 +74,8 @@ After the project is synchronized, we're ready to start using Firebase functiona
 If you are using an old version of FirebaseUI and upgrading, please see the appropriate
 migration guide:
 
+* [Upgrade from 4.3.2 to 5.x.x](./docs/upgrade-to-5.0.md)
+* [Upgrade from 3.3.1 to 4.x.x](./docs/upgrade-to-4.0.md)
 * [Upgrade from 2.3.0 to 3.x.x](./docs/upgrade-to-3.0.md)
 * [Upgrade from 1.2.0 to 2.x.x](./docs/upgrade-to-2.0.md)
 
@@ -93,31 +99,8 @@ firebase-ui-storage
 |--- com.google.firebase:firebase-storage
 ```
 
-Each version of FirebaseUI has dependency on a fixed version of these libraries, defined as the variable `firebase_version`
-in `common/constants.gradle`. If you are using any dependencies in your app of the form
-`implementation 'com.google.firebase:firebase-*:x.y.z'` or
-`implementation 'com.google.android.gms:play-services-*:x.y.z'`
-you need to make sure that you use the same version that your chosen version of FirebaseUI requires.
-
-For convenience, here are some recent examples:
-
-| FirebaseUI Version | Firebase/Play Services Version |
-|--------------------|--------------------------------|
-| 3.2.2              | 11.8.0                         |
-| 3.1.3              | 11.8.0                         |
-| 3.1.2              | 11.6.2                         |
-| 3.1.0              | 11.4.2                         |
-| 3.0.0              | 11.4.2                         |
-| 2.4.0              | 11.4.0                         |
-| 2.3.0              | 11.0.4                         |
-| 2.2.0              | 11.0.4                         |
-| 2.1.1              | 11.0.2                         |
-| 2.0.1              | 11.0.1                         |
-| 1.2.0              | 10.2.0                         |
-| 1.1.1              | 10.0.0 or 10.0.1               |
-| 1.0.1              | 10.0.0 or 10.0.1               |
-| 1.0.0              | 9.8.0                          |
-
+You can see the specific dependencies associated with each release on the 
+[Releases page](https://github.com/firebase/FirebaseUI-Android/releases).
 
 ### Upgrading dependencies
 
@@ -165,22 +148,6 @@ implementation "com.android.support:appcompat-v7:$BAR"
 implementation "com.android.support:palette-v7:$BAR"
 ```
 
-#### Note
-
-Starting version 25.4.0, support libraries are now available through
-[Google's Maven repository](https://developer.android.com/studio/build/dependencies.html#google-maven),
-so ensure that you have that added to your project's repositories.
-
-Open the `build.gradle` file for your project and modify it as following,
-
-```
-allprojects {
-    repositories {
-        google()
-        jcenter()
-    }
-}
-```
 
 ## Sample app
 
@@ -200,23 +167,31 @@ and Gradle while trying to run the sample app, try disabling the Instant
 Run feature of Android Studio. Alternatively, update Android Studio and
 Gradle to their latest versions.
 
+A note on importing the project using Android Studio: Using 'Project from 
+Version Control' will not automatically link the project with Gradle 
+(issue [#1349](https://github.com/firebase/FirebaseUI-Android/issues/1349)). 
+When doing so and opening any `build.gradle.kts` file, an error shows up: 
+`Project 'FirebaseUI-Android' isn't linked with Gradle`. To resolve this 
+issue, please `git checkout` the project manually and import with `Import 
+from external model`.
+
 ## Snapshot builds
 
-Like to live on the cutting edge?  Want to try the next release of FirebaseUI before anyone else? As of version `3.2.2`
+Like to live on the cutting edge?  Want to try the next release of FirebaseUI before anyone else?
 FirebaseUI hosts "snapshot" builds on oss.jfrog.org.
 
 Just add the following to your `build.gradle`:
 
 ```groovy
 repositories {
-  maven { url "https://oss.jfrog.org/artifactory/oss-release-local" }
+  maven { url "https://oss.jfrog.org/artifactory/oss-snapshot-local" }
 }
 ```
 
 Then you can depend on snapshot versions:
 
 ```groovy
-implementation 'com.firebaseui:firebase-ui-auth:3.2.2-SNAPSHOT`
+implementation 'com.firebaseui:firebase-ui-auth:x.y.z-SNAPSHOT'
 ```
 
 You can see which `SNAPSHOT` builds are avaiable here:
@@ -236,21 +211,6 @@ repository and running:
 ```sh
 ./gradlew :library:prepareArtifacts :library:publishAllToMavenLocal
 ```
-
-###  Deployment
-
-To deploy FirebaseUI to Bintray
-
-1. Set `BINTRAY_USER` and `BINTRAY_KEY` in your environment. You must
-   be a member of the firebaseui Bintray organization.
-1. Run `./gradlew clean :library:prepareArtifacts :library:bintrayUploadAll`
-1. Go to the Bintray dashboard and click 'Publish'.
-   1. In Bintray click the 'Maven Central' tab and publish the release.
-
-### Tag a release on GitHub
-
-* Ensure that all your changes are on master and that your local build is on master
-* Ensure that the correct version number is in `common/constants.gradle`
 
 ### Contributor License Agreements
 

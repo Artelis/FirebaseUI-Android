@@ -15,17 +15,41 @@
 package com.firebase.ui.auth.ui;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.RestrictTo;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 
 import com.firebase.ui.auth.R;
 
-@SuppressWarnings("Registered")
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-public class AppCompatBase extends HelperActivityBase {
+public abstract class AppCompatBase extends HelperActivityBase {
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTheme(R.style.FirebaseUI); // Provides default values
-        setTheme(getFlowHolder().getArguments().themeId);
+        setTheme(getFlowParams().themeId);
+    }
+
+    protected void switchFragment(@NonNull Fragment fragment,
+                                  int fragmentId,
+                                  @NonNull String tag,
+                                  boolean withTransition,
+                                  boolean addToBackStack) {
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        if (withTransition) {
+            ft.setCustomAnimations(R.anim.fui_slide_in_right, R.anim.fui_slide_out_left);
+        }
+        ft.replace(fragmentId, fragment, tag);
+        if (addToBackStack) {
+            ft.addToBackStack(null).commit();
+        } else {
+            ft.disallowAddToBackStack().commit();
+        }
+    }
+
+    protected void switchFragment(@NonNull Fragment fragment, int fragmentId, @NonNull String tag) {
+        switchFragment(fragment, fragmentId, tag, false, false);
     }
 }

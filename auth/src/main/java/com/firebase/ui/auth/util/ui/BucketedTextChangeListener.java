@@ -46,7 +46,7 @@ public final class BucketedTextChangeListener implements TextWatcher {
          * Idempotent function invoked by the listener when the edit text changes and is of expected
          * length
          */
-        void whileComplete();
+        void whenComplete();
 
         /**
          * Idempotent function invoked by the listener when the edit text changes and is not of
@@ -71,8 +71,8 @@ public final class BucketedTextChangeListener implements TextWatcher {
     }
 
     /**
-     * For example, passing in ("-", 6) would return the following result: {"", "-", "--", "---",
-     * "----", "-----", "------"}
+     * For example, passing in ("-", 6) would return the following result:
+     * {"", "-", "--", "---", "----", "-----", "------"}
      *
      * @param repeatableChar the char to repeat to the specified length
      * @param length         the maximum length of repeated chars
@@ -114,7 +114,7 @@ public final class BucketedTextChangeListener implements TextWatcher {
 
         // 4) Callback listeners waiting on content to be of expected length
         if (enteredContentLength == mExpectedContentLength && mCallback != null) {
-            mCallback.whileComplete();
+            mCallback.whenComplete();
         } else if (mCallback != null) {
             mCallback.whileIncomplete();
         }

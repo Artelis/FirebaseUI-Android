@@ -16,6 +16,7 @@ package com.firebase.uidemo;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -25,8 +26,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.firebase.ui.auth.AuthUI;
+import com.firebase.ui.auth.util.ExtraConstants;
+import com.firebase.uidemo.auth.AnonymousUpgradeActivity;
 import com.firebase.uidemo.auth.AuthUiActivity;
 import com.firebase.uidemo.database.firestore.FirestoreChatActivity;
+import com.firebase.uidemo.database.firestore.FirestorePagingActivity;
+import com.firebase.uidemo.database.realtime.FirebaseDbPagingActivity;
 import com.firebase.uidemo.database.realtime.RealtimeDbChatActivity;
 import com.firebase.uidemo.storage.ImageActivity;
 
@@ -38,8 +44,18 @@ public class ChooserActivity extends AppCompatActivity {
     RecyclerView mActivities;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (AuthUI.canHandleIntent(getIntent())) {
+            Intent intent = new Intent(ChooserActivity.this, AuthUiActivity
+                    .class);
+            intent.putExtra(ExtraConstants.EMAIL_LINK_SIGN_IN, getIntent().getData().toString());
+            startActivity(intent);
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_chooser);
         ButterKnife.bind(this);
 
@@ -48,25 +64,35 @@ public class ChooserActivity extends AppCompatActivity {
         mActivities.setHasFixedSize(true);
     }
 
-    private static class ActivityChooserAdapter extends RecyclerView.Adapter<ActivityStarterHolder> {
+    private static class ActivityChooserAdapter
+            extends RecyclerView.Adapter<ActivityStarterHolder> {
         private static final Class[] CLASSES = new Class[]{
                 AuthUiActivity.class,
+                AnonymousUpgradeActivity.class,
                 FirestoreChatActivity.class,
+                FirestorePagingActivity.class,
                 RealtimeDbChatActivity.class,
+                FirebaseDbPagingActivity.class,
                 ImageActivity.class,
         };
 
         private static final int[] DESCRIPTION_NAMES = new int[]{
                 R.string.title_auth_activity,
+                R.string.title_anonymous_upgrade,
                 R.string.title_firestore_activity,
+                R.string.title_firestore_paging_activity,
                 R.string.title_realtime_database_activity,
+                R.string.title_realtime_database_paging_activity,
                 R.string.title_storage_activity
         };
 
         private static final int[] DESCRIPTION_IDS = new int[]{
                 R.string.desc_auth,
+                R.string.desc_anonymous_upgrade,
                 R.string.desc_firestore,
+                R.string.desc_firestore_paging,
                 R.string.desc_realtime_database,
+                R.string.desc_realtime_database_paging,
                 R.string.desc_storage
         };
 
@@ -88,7 +114,8 @@ public class ChooserActivity extends AppCompatActivity {
         }
     }
 
-    private static class ActivityStarterHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    private static class ActivityStarterHolder extends RecyclerView.ViewHolder
+            implements View.OnClickListener {
         private TextView mTitle;
         private TextView mDescription;
 

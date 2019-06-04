@@ -50,10 +50,9 @@ public class WelcomeBackPasswordPromptTest {
         Intent startIntent = WelcomeBackPasswordPrompt.createIntent(
                 RuntimeEnvironment.application,
                 TestHelper.getFlowParameters(Collections.singletonList(EmailAuthProvider.PROVIDER_ID)),
-                new IdpResponse.Builder(
-                        new User.Builder(EmailAuthProvider.PROVIDER_ID, TestConstants.EMAIL)
-                                .build())
-                        .build());
+                new IdpResponse.Builder(new User.Builder(
+                        EmailAuthProvider.PROVIDER_ID, TestConstants.EMAIL
+                ).build()).build());
         return Robolectric
                 .buildActivity(WelcomeBackPasswordPrompt.class, startIntent)
                 .create()
@@ -70,7 +69,7 @@ public class WelcomeBackPasswordPromptTest {
                 welcomeBack.findViewById(R.id.password_layout);
 
         assertEquals(
-                welcomeBack.getString(R.string.fui_required_field),
+                welcomeBack.getString(R.string.fui_error_invalid_password),
                 passwordLayout.getError().toString());
 
         // should block and not start a new activity

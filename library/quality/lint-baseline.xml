@@ -8,25 +8,12 @@
         <location file="src/main/AndroidManifest.xml" />
     </issue>
 
+    <!-- This is an acceptable misspelling for German -->
     <issue
-        id="UnusedResources"
+        id="Typos"
         severity="Error"
-        message="The resource `R.string.project_id` appears to be unused"
-        category="Performance"
-        priority="3"
-        summary="Unused resources"
-        explanation="Unused resources make applications larger and slow down builds."
-        errorLine1="    &lt;string name=&quot;project_id&quot; translatable=&quot;false&quot;>fir-ui-playground&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~"
-        quickfix="studio">
-        <location
-            file="build/generated/res/google-services/debug/values/values.xml"
-            line="10"
-            column="13"/>
-        <location
-            file="build/generated/res/google-services/release/values/values.xml"
-            line="10"
-            column="13"/>
+        message="&quot;abzuschliessen&quot; is a common misspelling; did you mean &quot;abzuschließen&quot; ?"
+        category="Correctness:Messages">
+        <location file="auth/src/main/res/values-de-rCH/strings.xml" />
     </issue>
-
 </issues>
